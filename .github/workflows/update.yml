@@ -1,4 +1,4 @@
-name: weekly-update
+name: daily-update
 on:
   schedule:
     # Daily 00:30 UTC = 06:00 IST
