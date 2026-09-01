@@ -4,6 +4,10 @@ Gap-free historical dataset of the **Reserve Bank of India (RBI) Reference
 Exchange Rates** for major currencies against the Indian Rupee (INR),
 auto-updated daily at 06:00 IST by a scheduled GitHub Actions workflow.
 
+**Coverage:** August 25, 1998 to September 1, 2026 (28.0 years)
+**Total Records:** 26,833
+**Total Trading Days:** 6,656
+
 ## Data
 
 | Currency | Description | Unit | Coverage Start |
@@ -23,10 +27,9 @@ published on 1999-01-04.*
 1. **`rbi_forex_reference_rates_1998_2026_long.csv`** — long format
    (`date,currency,rate,unit`). Best for SQL and programmatic processing.
 2. **`rbi_forex_reference_rates_1998_2026_wide.csv`** — pivoted wide format,
-   currencies as columns. Best for Excel and plotting.
+   currencies as columns. Best for Excel, VisiData, and plotting.
 3. **`rbi_forex_reference_rates_1998_2026.parquet`** — columnar format for
-   DuckDB / Pandas / Polars.
-4. **`RBI_FOREX_REFERENCE_RATES_DOCUMENTATION.md`** — detailed methodology.
+   DuckDB, Pandas, and Polars.
 
 ## Methodology & Data Sources
 
@@ -35,22 +38,82 @@ The historical series was built by merging and validating the RBI archive with
 NSE historical data (used to fill a gap for July 2018 – March 2022).
 
 Each day a workflow fetches any new trading days since the last recorded
-date, appends them, and regenerates the wide CSV and parquet. See
+date, appends them, and regenerates the long/wide CSVs and parquet. See
 [`scripts/update.sh`](scripts/update.sh) and
 [`.github/workflows/update.yml`](.github/workflows/update.yml).
 
+### Validation & corrections
+
+- **Deduplication**: data from both sources was merged and duplicates removed.
+- **Zero-rate filtering**: placeholder entries (rate = 0.0000) for EUR prior to
+  its introduction in January 1999 were removed.
+- **Missing day correction**: fixed missing GBP/JPY data for the first date
+  (1998-08-25) in early iterations.
+- **Unit normalization**: consistent units (JPY per 100, IDR per 10,000).
+
 ## Usage
 
-### DuckDB (fastest)
+### Best fit at a glance
+
+| Task | Tool |
+| :--- | :--- |
+| Querying & analysis | **DuckDB** — reads CSV & parquet natively; the repo's own engine |
+| Charting from SQL | **ggsql** — Grammar of Graphics for SQL, DuckDB-backed |
+| Programmatic analysis | **Python** — pandas/polars read the parquet |
+| Interactive browsing | **VisiData** — parquet or wide CSV |
+| Quick CLI plots | **Gnuplot** — wide CSV |
+
+### DuckDB (SQL) — best for analysis
 
 ```sql
+-- Annual average USD rate
 SELECT YEAR(date::DATE) AS year, AVG(rate)
 FROM 'rbi_forex_reference_rates_1998_2026_long.csv'
 WHERE currency = 'USD'
 GROUP BY year ORDER BY year;
+
+-- Latest rates, straight from the parquet
+SELECT * FROM 'rbi_forex_reference_rates_1998_2026.parquet'
+WHERE date = (SELECT max(date) FROM 'rbi_forex_reference_rates_1998_2026.parquet');
 ```
 
-### gnuplot (wide format)
+### ggsql — best for charting from SQL
+
+[ggsql](https://ggsql.org/) adds Grammar-of-Graphics clauses to SQL and pushes
+computation down to DuckDB. Load the parquet into a database once, then chart:
+
+```sql
+-- one-time: build a DuckDB database from the parquet
+duckdb rates.duckdb "CREATE TABLE rates AS SELECT * FROM read_parquet('rbi_forex_reference_rates_1998_2026.parquet');"
+
+-- USD/INR over time
+ggsql exec --reader duckdb://rates.duckdb "
+SELECT date, rate FROM rates WHERE currency = 'USD'
+VISUALISE date AS x, rate AS y
+DRAW line
+SCALE x VIA date
+LABEL title => 'USD/INR RBI reference rate'"
+```
+
+### Python (pandas) — best for programmatic analysis
+
+```python
+import pandas as pd
+
+rates = pd.read_parquet("rbi_forex_reference_rates_1998_2026.parquet")
+usd = rates[rates.currency == "USD"].set_index("date")
+usd["rate"].plot()   # needs matplotlib; the parquet also reads with polars/duckdb
+```
+
+### VisiData — interactive browsing
+
+```bash
+vd rbi_forex_reference_rates_1998_2026.parquet
+# or the wide CSV, for side-by-side currency comparison
+vd rbi_forex_reference_rates_1998_2026_wide.csv
+```
+
+### Gnuplot — quick plots (wide format)
 
 ```gnuplot
 set datafile separator ","
