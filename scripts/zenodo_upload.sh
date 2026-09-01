@@ -53,7 +53,7 @@ if [[ -z "$end_date" ]]; then
 fi
 publication_date=$(date +%Y-%m-%d)
 
-description="Gap-free historical dataset of Reserve Bank of India (RBI) Reference Exchange Rates for major currencies (USD, GBP, EUR, JPY, AED, IDR) against the Indian Rupee (INR), covering $start_date to $end_date. Auto-updated daily from the RBI Reference Rate Archive. Files: long-format CSV (date,currency,rate,unit), wide-format CSV, and Parquet. The data are facts and are not copyrightable under Indian law (Eastern Book Company v. D.B. Modak, (2008) 1 SCC 1); the dataset is dedicated to the public domain under CC0 1.0."
+description="Gap-free historical dataset of Reserve Bank of India (RBI) Reference Exchange Rates for major currencies (USD, GBP, EUR, JPY, AED, IDR) against the Indian Rupee (INR), covering $start_date to $end_date. Rates for 1998-2018 are from the RBI Reference Rate Archive; since July 2018 they are the FBIL reference rates (Financial Benchmarks India Pvt Ltd is the official benchmark administrator, and RBI publishes FBIL's rates). A gap in RBI's archive page for Jul 2018-Mar 2022 was filled from the FBIL series via NSE's public API and cross-checked against FBIL's own public API. Auto-updated daily. Files: long-format CSV (date,currency,rate,unit), wide-format CSV, and Parquet. The data are facts and are not copyrightable under Indian law (Eastern Book Company v. D.B. Modak, (2008) 1 SCC 1); the dataset is dedicated to the public domain under CC0 1.0."
 
 metadata=$(jq -n \
     --arg title "$TITLE" \

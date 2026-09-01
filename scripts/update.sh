@@ -7,12 +7,17 @@
 # refreshes the documentation. It performs no git operations — the calling
 # workflow commits and pushes.
 #
+# The primary source is the RBI Reference Rate Archive. If that fetch fails,
+# the script falls back to the FBIL public API; successful RBI results are
+# cross-checked against FBIL.
+#
 # Usage:
 #   bash scripts/update.sh            # fetch + regenerate
 #   bash scripts/update.sh --debug    # verbose logging
 #
-# Data source: RBI Reference Rate Archive
-#   https://www.rbi.org.in/scripts/referenceratearchive.aspx
+# Data sources:
+#   RBI:  https://www.rbi.org.in/scripts/referenceratearchive.aspx
+#   FBIL: https://www.fbil.org.in/wasdm/refrates/fetchfiltered
 #
 # Run daily by .github/workflows/update.yml (06:00 IST).
 #
@@ -44,6 +49,7 @@ PARQUET="$REPO_DIR/rbi_forex_reference_rates.parquet"
 DOC="$REPO_DIR/README.md"
 
 RBI_URL="https://www.rbi.org.in/scripts/referenceratearchive.aspx"
+FBIL_URL="https://www.fbil.org.in/wasdm/refrates/fetchfiltered"
 UA="Mozilla/5.0 (X11; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0"
 CHUNK_DAYS=30
 
@@ -118,6 +124,77 @@ last_date() {
     duckdb -csv -noheader -c "SELECT max(date) FROM read_csv('$1', header=true);" 2>/dev/null | tail -1
 }
 
+# curl with retries and visible errors (both RBI and FBIL can be flaky).
+zen() {
+    curl -sSf --retry 3 --retry-all-errors --retry-delay 2 --max-time 60 "$@"
+}
+
+# Fetch one date range (ISO YYYY-MM-DD..YYYY-MM-DD) from the FBIL public API
+# and emit long-format rows (date,currency,rate,unit) on stdout. The endpoint
+# expects dates as Y-M-D (no zero padding) and is reachable from any IP.
+fetch_fbil_range() {
+    local from_iso="$1" to_iso="$2"
+    local from_m to_m data
+    from_m=$(echo "$from_iso" | awk -F- '{printf "%d-%d-%d", $1, $2, $3}')
+    to_m=$(echo "$to_iso" | awk -F- '{printf "%d-%d-%d", $1, $2, $3}')
+    data=$(zen "${FBIL_URL}?fromDate=${from_m}&toDate=${to_m}&authenticated=false") || {
+        echo "Error: FBIL fetchfiltered request failed ($from_iso → $to_iso)" >&2
+        return 1
+    }
+    echo "$data" | jq -r '
+        .[] |
+        (.processRunDate[0:10]) as $d |
+        if   .subProdName == "INR / 1 USD"     then "\($d),USD," + (.rate|tostring) + ",1"
+        elif .subProdName == "INR / 1 GBP"     then "\($d),GBP," + (.rate|tostring) + ",1"
+        elif .subProdName == "INR / 1 EUR"     then "\($d),EUR," + (.rate|tostring) + ",1"
+        elif .subProdName == "INR / 100 JPY"   then "\($d),JPY," + (.rate|tostring) + ",100"
+        elif .subProdName == "INR / 1 AED"     then "\($d),AED," + (.rate|tostring) + ",1"
+        elif .subProdName == "INR / 10000 IDR" then "\($d),IDR," + (.rate|tostring) + ",10000"
+        else empty end'
+}
+
+# Cross-check fetched RBI rows (long format) against the FBIL API for the same
+# range. Only (date,currency) pairs present in both sources are compared, so a
+# few days of FBIL lag don't cause false failures. Exits non-zero on mismatch.
+cross_check_fbil() {
+    local from_iso="$1" to_iso="$2" rows_file="$3"
+    local fbil_tmp
+    fbil_tmp=$(mktemp)
+    if ! fetch_fbil_range "$from_iso" "$to_iso" > "$fbil_tmp" 2>/dev/null; then
+        log_info "  FBIL API unavailable — skipping cross-check."
+        rm -f "$fbil_tmp"
+        return 0
+    fi
+    if python3 - "$rows_file" "$fbil_tmp" <<'PY'; then
+import sys
+rbi_path, fbil_path = sys.argv[1:3]
+def load(path):
+    out = {}
+    for line in open(path):
+        line = line.strip()
+        if not line:
+            continue
+        d, c, r, u = line.split(",")
+        out[(d, c)] = float(r)
+    return out
+rbi = load(rbi_path)
+fbil = load(fbil_path)
+bad = sorted((d, c, a, fbil[(d, c)]) for (d, c), a in rbi.items()
+             if (d, c) in fbil and abs(a - fbil[(d, c)]) > 0.001)
+for d, c, a, b in bad[:10]:
+    print(f"  MISMATCH {d} {c}: RBI={a} FBIL={b}", file=sys.stderr)
+print(f"  compared {len(rbi)} rows, {len(bad)} mismatches")
+sys.exit(1 if bad else 0)
+PY
+        log_info "  Cross-check passed."
+    else
+        echo "Error: FBIL cross-check failed — RBI and FBIL data disagree." >&2
+        rm -f "$fbil_tmp"
+        exit 1
+    fi
+    rm -f "$fbil_tmp"
+}
+
 # --- main ----------------------------------------------------------------
 last=$(last_date "$LONG")
 if [[ -z "$last" ]]; then
@@ -142,17 +219,42 @@ tmp_rows=$(mktemp)
 dedup=$(mktemp)
 trap 'rm -f "$tmp_rows" "$dedup"' EXIT
 
+# Fetch from RBI in chunks; fall back to FBIL if any chunk fails.
+rbi_ok=true
 cur=$from_epoch
 while [[ $cur -le $to_epoch ]]; do
     cend=$((cur + (CHUNK_DAYS - 1) * 86400))
     if [[ $cend -gt $to_epoch ]]; then cend=$to_epoch; fi
     f=$(date -d "@$cur" +%d/%m/%Y)
     t=$(date -d "@$cend" +%d/%m/%Y)
-    log_debug "  chunk: $f → $t"
-    fetch_rbi_range "$f" "$t" >> "$tmp_rows"
+    log_debug "  chunk (RBI): $f → $t"
+    if ! fetch_rbi_range "$f" "$t" >> "$tmp_rows"; then
+        log_info "  RBI fetch failed for chunk $f → $t."
+        rbi_ok=false
+        break
+    fi
     sleep 1
     cur=$((cend + 86400))
 done
+
+if [[ "$rbi_ok" == "false" ]]; then
+    log_info "RBI fetch failed — fetching whole range from FBIL API instead."
+    : > "$tmp_rows"   # discard partial RBI results so sources never mix
+    cur=$from_epoch
+    while [[ $cur -le $to_epoch ]]; do
+        cend=$((cur + (CHUNK_DAYS - 1) * 86400))
+        if [[ $cend -gt $to_epoch ]]; then cend=$to_epoch; fi
+        f=$(date -d "@$cur" +%Y-%m-%d)
+        t=$(date -d "@$cend" +%Y-%m-%d)
+        log_debug "  chunk (FBIL): $f → $t"
+        fetch_fbil_range "$f" "$t" >> "$tmp_rows"
+        sleep 1
+        cur=$((cend + 86400))
+    done
+else
+    log_info "Cross-checking RBI results against FBIL API..."
+    cross_check_fbil "$from_iso" "$to_iso" "$tmp_rows"
+fi
 
 new_count=$(wc -l < "$tmp_rows")
 if [[ "$new_count" -eq 0 ]]; then

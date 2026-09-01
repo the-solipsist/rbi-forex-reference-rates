@@ -33,12 +33,19 @@ published on 1999-01-04.*
 
 ## Methodology & Data Sources
 
-Primary source: the [RBI Reference Rate Archive](https://www.rbi.org.in/scripts/referenceratearchive.aspx).
-The historical series was built by merging and validating the RBI archive with
-NSE historical data (used to fill a gap for July 2018 – March 2022).
+The series is the RBI reference exchange rate, from two sources:
 
-Each day a workflow fetches any new trading days since the last recorded
-date, appends them, and regenerates the long/wide CSVs and parquet. See
+- **1998–2018**: the [RBI Reference Rate Archive](https://www.rbi.org.in/scripts/referenceratearchive.aspx).
+- **2018–present**: the **FBIL reference rates** — Financial Benchmarks India
+  Pvt Ltd is the official benchmark administrator, and RBI publishes FBIL's
+  rates. RBI's archive page has a gap for July 2018 – March 2022, which was
+  filled from the FBIL series via NSE's public API and cross-checked against
+  FBIL's own public API.
+
+Each day a workflow fetches any new trading days since the last recorded date
+(using the RBI archive, falling back to the FBIL API if that fetch fails, and
+cross-checking the results against FBIL), appends them, and regenerates the
+long/wide CSVs and parquet. See
 [`scripts/update.sh`](scripts/update.sh) and
 [`.github/workflows/update.yml`](.github/workflows/update.yml).
 
