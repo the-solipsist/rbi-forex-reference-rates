@@ -2,7 +2,7 @@
 
 Gap-free historical dataset of the **Reserve Bank of India (RBI) Reference
 Exchange Rates** for major currencies against the Indian Rupee (INR),
-auto-updated every Monday 06:00 IST by a scheduled GitHub Actions workflow.
+auto-updated daily at 06:00 IST by a scheduled GitHub Actions workflow.
 
 ## Data
 
@@ -34,7 +34,7 @@ Primary source: the [RBI Reference Rate Archive](https://www.rbi.org.in/scripts/
 The historical series was built by merging and validating the RBI archive with
 NSE historical data (used to fill a gap for July 2018 – March 2022).
 
-Each Monday a workflow fetches any new trading days since the last recorded
+Each day a workflow fetches any new trading days since the last recorded
 date, appends them, and regenerates the wide CSV and parquet. See
 [`scripts/update.sh`](scripts/update.sh) and
 [`.github/workflows/update.yml`](.github/workflows/update.yml).
