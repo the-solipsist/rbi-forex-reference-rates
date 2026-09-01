@@ -41,7 +41,7 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LONG="$REPO_DIR/rbi_forex_reference_rates_1998_2026_long.csv"
 WIDE="$REPO_DIR/rbi_forex_reference_rates_1998_2026_wide.csv"
 PARQUET="$REPO_DIR/rbi_forex_reference_rates_1998_2026.parquet"
-DOC="$REPO_DIR/RBI_FOREX_REFERENCE_RATES_DOCUMENTATION.md"
+DOC="$REPO_DIR/README.md"
 
 RBI_URL="https://www.rbi.org.in/scripts/referenceratearchive.aspx"
 UA="Mozilla/5.0 (X11; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0"
