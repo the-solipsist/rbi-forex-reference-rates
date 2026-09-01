@@ -173,13 +173,16 @@ if [[ "$dup" != "0" ]]; then
     exit 1
 fi
 
-mv "$dedup" "$LONG"
-log_info "Long CSV updated."
+# Regenerate the long CSV in canonical order (date, currency) and normalized
+# rate formatting. The deduped merge above is append-only; this keeps the
+# published file deterministically sorted.
+duckdb -c "COPY (SELECT date, currency, rate, unit FROM read_csv('$dedup', header=true, columns={'date':'VARCHAR','currency':'VARCHAR','rate':'DOUBLE','unit':'BIGINT'}) ORDER BY date, currency) TO '$LONG' (HEADER, DELIMITER ',');"
+log_info "Long CSV updated (sorted)."
 
 # Regenerate derived files.
 log_info "Regenerating wide CSV and parquet..."
-duckdb "COPY (PIVOT read_csv('$LONG', header=true, columns={'date':'VARCHAR','currency':'VARCHAR','rate':'DOUBLE','unit':'BIGINT'}) ON currency IN ('AED','EUR','GBP','IDR','JPY','USD') USING first(rate) GROUP BY date ORDER BY date) TO '$WIDE' (HEADER, DELIMITER ',');"
-duckdb "COPY (SELECT date::DATE AS date, currency, rate::DOUBLE AS rate, unit::BIGINT AS unit FROM read_csv('$LONG', header=true) ORDER BY date, currency) TO '$PARQUET' (FORMAT PARQUET);"
+duckdb -c "COPY (PIVOT read_csv('$LONG', header=true, columns={'date':'VARCHAR','currency':'VARCHAR','rate':'DOUBLE','unit':'BIGINT'}) ON currency IN ('AED','EUR','GBP','IDR','JPY','USD') USING first(rate) GROUP BY date ORDER BY date) TO '$WIDE' (HEADER, DELIMITER ',');"
+duckdb -c "COPY (SELECT date::DATE AS date, currency, rate::DOUBLE AS rate, unit::BIGINT AS unit FROM read_csv('$LONG', header=true) ORDER BY date, currency) TO '$PARQUET' (FORMAT PARQUET);"
 
 # Update documentation with fresh counts.
 log_info "Updating documentation..."
