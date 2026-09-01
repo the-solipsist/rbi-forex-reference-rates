@@ -24,11 +24,11 @@ published on 1999-01-04.*
 
 ## Files
 
-1. **`rbi_forex_reference_rates_1998_2026_long.csv`** — long format
+1. **`rbi_forex_reference_rates_long.csv`** — long format
    (`date,currency,rate,unit`). Best for SQL and programmatic processing.
-2. **`rbi_forex_reference_rates_1998_2026_wide.csv`** — pivoted wide format,
+2. **`rbi_forex_reference_rates_wide.csv`** — pivoted wide format,
    currencies as columns. Best for Excel, VisiData, and plotting.
-3. **`rbi_forex_reference_rates_1998_2026.parquet`** — columnar format for
+3. **`rbi_forex_reference_rates.parquet`** — columnar format for
    DuckDB, Pandas, and Polars.
 
 ## Methodology & Data Sources
@@ -68,13 +68,13 @@ date, appends them, and regenerates the long/wide CSVs and parquet. See
 ```sql
 -- Annual average USD rate
 SELECT YEAR(date::DATE) AS year, AVG(rate)
-FROM 'rbi_forex_reference_rates_1998_2026_long.csv'
+FROM 'rbi_forex_reference_rates_long.csv'
 WHERE currency = 'USD'
 GROUP BY year ORDER BY year;
 
 -- Latest rates, straight from the parquet
-SELECT * FROM 'rbi_forex_reference_rates_1998_2026.parquet'
-WHERE date = (SELECT max(date) FROM 'rbi_forex_reference_rates_1998_2026.parquet');
+SELECT * FROM 'rbi_forex_reference_rates.parquet'
+WHERE date = (SELECT max(date) FROM 'rbi_forex_reference_rates.parquet');
 ```
 
 ### ggsql — best for charting from SQL
@@ -84,7 +84,7 @@ computation down to DuckDB. Load the parquet into a database once, then chart:
 
 ```sql
 -- one-time: build a DuckDB database from the parquet
-duckdb rates.duckdb "CREATE TABLE rates AS SELECT * FROM read_parquet('rbi_forex_reference_rates_1998_2026.parquet');"
+duckdb rates.duckdb "CREATE TABLE rates AS SELECT * FROM read_parquet('rbi_forex_reference_rates.parquet');"
 
 -- USD/INR over time
 ggsql exec --reader duckdb://rates.duckdb "
@@ -100,7 +100,7 @@ LABEL title => 'USD/INR RBI reference rate'"
 ```python
 import pandas as pd
 
-rates = pd.read_parquet("rbi_forex_reference_rates_1998_2026.parquet")
+rates = pd.read_parquet("rbi_forex_reference_rates.parquet")
 usd = rates[rates.currency == "USD"].set_index("date")
 usd["rate"].plot()   # needs matplotlib; the parquet also reads with polars/duckdb
 ```
@@ -108,17 +108,33 @@ usd["rate"].plot()   # needs matplotlib; the parquet also reads with polars/duck
 ### VisiData — interactive browsing
 
 ```bash
-vd rbi_forex_reference_rates_1998_2026.parquet
+vd rbi_forex_reference_rates.parquet
 # or the wide CSV, for side-by-side currency comparison
-vd rbi_forex_reference_rates_1998_2026_wide.csv
+vd rbi_forex_reference_rates_wide.csv
 ```
 
 ### Gnuplot — quick plots (wide format)
 
 ```gnuplot
 set datafile separator ","
-plot "rbi_forex_reference_rates_1998_2026_wide.csv" using 1:7 with lines title "USD/INR"
+plot "rbi_forex_reference_rates_wide.csv" using 1:7 with lines title "USD/INR"
 ```
+
+## Copyright & License
+
+The files in this repository are a compilation of **facts** — Reserve Bank of
+India reference exchange rates — and contain no original expression. Under the
+Copyright Act, 1957 (India), copyright protects only original works and
+requires a modicum of creativity; a bare compilation of facts carries no such
+originality. Accordingly, this data is **not copyrightable** and is in the
+**public domain** — see *Eastern Book Company v. D.B. Modak*, (2008) 1 SCC 1
+(holding that factual data without original expression is not protected).
+
+To remove any residual doubt, the repository is additionally dedicated to the
+public domain under the [CC0 1.0 Universal Public Domain
+Dedication](https://creativecommons.org/publicdomain/zero/1.0/) — see
+[`LICENSE`](LICENSE). You may copy, modify, distribute, and use the data for
+any purpose, without attribution or permission.
 
 ## Disclaimer
 

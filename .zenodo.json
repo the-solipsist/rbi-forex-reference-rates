@@ -1,0 +1,28 @@
+{
+  "title": "RBI Forex Reference Rates Archive",
+  "description": "Gap-free historical dataset of Reserve Bank of India (RBI) Reference Exchange Rates for major currencies (USD, GBP, EUR, JPY, AED, IDR) against the Indian Rupee (INR), covering 1998-08-25 to present. Auto-updated daily from the RBI Reference Rate Archive (https://www.rbi.org.in/scripts/referenceratearchive.aspx). Files: long-format CSV (date,currency,rate,unit), wide-format CSV, and Parquet. The data are facts and are not copyrightable under Indian law (Eastern Book Company v. D.B. Modak, (2008) 1 SCC 1); the dataset is dedicated to the public domain under CC0 1.0.",
+  "upload_type": "dataset",
+  "access_right": "open",
+  "license": "cc-zero",
+  "creators": [
+    {
+      "name": "Prakash, Pranesh",
+      "orcid": "0000-0002-5368-4827"
+    }
+  ],
+  "keywords": [
+    "RBI",
+    "forex",
+    "exchange rates",
+    "INR",
+    "Reserve Bank of India",
+    "reference rates",
+    "parquet"
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://github.com/the-solipsist/rbi-forex-reference-rates"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+name: zenodo-archive
+on:
+  schedule:
+    # Quarterly: 1 Jan, 1 Apr, 1 Jul, 1 Oct at 01:00 UTC = 06:30 IST
+    # (after the daily data update at 06:00 IST)
+    - cron: '0 1 1 1,4,7,10 *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload dataset to Zenodo
+        env:
+          ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
+        run: bash scripts/zenodo_upload.sh

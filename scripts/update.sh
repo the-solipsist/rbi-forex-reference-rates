@@ -38,9 +38,9 @@ done
 
 # --- configuration -------------------------------------------------------
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LONG="$REPO_DIR/rbi_forex_reference_rates_1998_2026_long.csv"
-WIDE="$REPO_DIR/rbi_forex_reference_rates_1998_2026_wide.csv"
-PARQUET="$REPO_DIR/rbi_forex_reference_rates_1998_2026.parquet"
+LONG="$REPO_DIR/rbi_forex_reference_rates_long.csv"
+WIDE="$REPO_DIR/rbi_forex_reference_rates_wide.csv"
+PARQUET="$REPO_DIR/rbi_forex_reference_rates.parquet"
 DOC="$REPO_DIR/README.md"
 
 RBI_URL="https://www.rbi.org.in/scripts/referenceratearchive.aspx"
