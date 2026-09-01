@@ -1,7 +1,7 @@
 # RBI Forex Reference Rates Archive (1998-2026)
 
 ## Overview
-This archive contains a comprehensive, gap-free historical dataset of the Reserve Bank of India (RBI) Reference Exchange Rates for major currencies against the Indian Rupee (INR). It is auto-updated every Monday 06:00 IST by a scheduled GitHub Actions workflow (`scripts/update.sh`), which fetches any new trading days from the RBI Reference Rate Archive and regenerates all files.
+This archive contains a comprehensive, gap-free historical dataset of the Reserve Bank of India (RBI) Reference Exchange Rates for major currencies against the Indian Rupee (INR). It is auto-updated daily at 06:00 IST by a scheduled GitHub Actions workflow (`scripts/update.sh`), which fetches any new trading days from the RBI Reference Rate Archive and regenerates all files.
 
 **Coverage:** August 25, 1998 to September 1, 2026 (28.0 years)
 **Total Records:** 26,833
