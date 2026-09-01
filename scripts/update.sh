@@ -14,7 +14,7 @@
 # Data source: RBI Reference Rate Archive
 #   https://www.rbi.org.in/scripts/referenceratearchive.aspx
 #
-# Run weekly by .github/workflows/update.yml (Monday 06:00 IST).
+# Run daily by .github/workflows/update.yml (06:00 IST).
 #
 set -euo pipefail
 
