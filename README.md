@@ -5,7 +5,7 @@ Exchange Rates** for major currencies against the Indian Rupee (INR),
 auto-updated daily at 06:00 IST by a scheduled GitHub Actions workflow.
 
 **Coverage:** August 25, 1998 to September 18, 2026 (28.1 years)
-**Total Records:** 26,905
+**Total Records:** 26,929
 **Total Trading Days:** 6,668
 
 ## Data

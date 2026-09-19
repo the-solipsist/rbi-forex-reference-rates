@@ -1,0 +1,19 @@
+# SGB premature-redemption calendar (starter — extend from RBI's half-yearly
+# SGB Scheme Calendars and GOI issue notifications).
+#
+# Why this file exists: redemption price is a pure function of IBJA 999
+# closes (see scripts/derive_sgb_redemption.py), so the only manual input
+# is WHICH tranches redeem WHEN. id is the canonical API contract
+# (SGB-<financial-year>-<series>); press_release_prid lets anyone verify
+# the derived price against RBI. Blank issue dates are unverified.
+id,tranche,issue_date,redemption_date,press_release_prid
+SGB-2019-20-IX,2019-20 Series IX,2020-02-11,2026-08-11,854
+SGB-2020-21-IV,2020-21 Series IV,2020-07-14,2026-07-14,661
+SGB-2020-21-V,2020-21 Series V,2020-08-11,2026-08-11,854
+SGB-2020-21-VI,2020-21 Series VI,,2026-09-08,
+SGB-2020-21-X,2020-21 Series X,2021-01-19,2026-07-18,63184
+SGB-2020-21-XI,2020-21 Series XI,2021-02-09,2026-08-07,829
+SGB-2020-21-XII,2020-21 Series XII,,2026-09-09,2757
+SGB-2021-22-I,2021-22 Series I,2021-05-25,2026-05-25,318
+SGB-2021-22-IV,2021-22 Series IV,2021-07-20,2026-07-20,63184
+SGB-2021-22-VI,2021-22 Series VI,2021-09-07,2026-09-07,63525
