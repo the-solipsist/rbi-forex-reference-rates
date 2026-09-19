@@ -1,13 +1,19 @@
 name: daily-update
 on:
   schedule:
-    # FBIL publishes ~13:30 IST on Mumbai business days. Primary run just
-    # after publish (13:35 IST = 08:05 UTC); fallback at 15:00 IST
-    # (09:30 UTC) in case the first run races a late publish. Both are
-    # idempotent (no-op when there is nothing new); weekdays only.
-    - cron: '5 8 * * 1-5'
-    - cron: '30 9 * * 1-5'
+    # FBIL publishes ~13:30 IST on Mumbai business days. Poll every 5 min
+    # across the publish window (13:30-14:00 IST = 08:00-08:30 UTC) with a
+    # 16:00 IST (10:30 UTC) backstop. All runs are idempotent (no-op when
+    # there is nothing new); weekdays only. Actions cron is the minimum
+    # 5-minute granularity GitHub allows.
+    - cron: '0-30/5 8 * * 1-5'
+    - cron: '30 10 * * 1-5'
   workflow_dispatch:
+
+# Overlapping runs would race on commit+push; queue them instead.
+concurrency:
+  group: rbi-update
+  cancel-in-progress: false
 
 permissions:
   contents: write
