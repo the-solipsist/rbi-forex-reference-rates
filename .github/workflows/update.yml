@@ -1,8 +1,12 @@
 name: daily-update
 on:
   schedule:
-    # Daily 00:30 UTC = 06:00 IST
-    - cron: '30 0 * * *'
+    # FBIL publishes ~13:30 IST on Mumbai business days. Primary run just
+    # after publish (13:35 IST = 08:05 UTC); fallback at 15:00 IST
+    # (09:30 UTC) in case the first run races a late publish. Both are
+    # idempotent (no-op when there is nothing new); weekdays only.
+    - cron: '5 8 * * 1-5'
+    - cron: '30 9 * * 1-5'
   workflow_dispatch:
 
 permissions:
