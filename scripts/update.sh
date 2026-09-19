@@ -203,6 +203,16 @@ if [[ -z "$last" ]]; then
 fi
 log_info "Last recorded date: $last"
 
+# Early exit before any network call: if today is already captured, later
+# scheduled runs in the publish window become ~10s no-ops instead of full
+# scrapes. (Weekends have no publish; the cron is weekdays-only, but a
+# manual dispatch on Sat/Sun exits here too.)
+today_iso=$(date +%Y-%m-%d)
+if [[ "$last" > "$today_iso" || "$last" == "$today_iso" ]]; then
+    log_info "Dataset already current through $last — nothing to do."
+    exit 0
+fi
+
 from_iso=$(date -d "$last + 1 day" +%Y-%m-%d)
 to_iso=$(date +%Y-%m-%d)
 log_info "Fetching $from_iso → $to_iso from RBI archive..."
