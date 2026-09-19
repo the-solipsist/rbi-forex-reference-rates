@@ -1,8 +1,15 @@
-# Public Domain — RBI Forex Reference Rates
+# Public Domain — RBI Forex Reference Rates, IBJA Bullion Closes, SGB Data
 
-The files in this repository are a compilation of **facts**: Reserve Bank of
-India reference exchange rates (numbers, dates, and currency codes), with no
-original expression.
+The files in this repository are compilations of **facts**, with no original
+expression:
+
+- Reserve Bank of India reference exchange rates (numbers, dates, and
+  currency codes);
+- IBJA bullion closes (numbers, dates, sessions, and purities) as published
+  by the India Bullion & Jewellers Association;
+- SGB premature-redemption prices derived by RBI's own published arithmetic
+  (simple average of IBJA 999 closes for the three business days before
+  redemption) from those closes.
 
 Copyright in India (Copyright Act, 1957) subsists only in **original** works
 and requires a *modicum of creativity*. A bare compilation of factual data

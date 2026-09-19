@@ -129,8 +129,9 @@ plot "rbi_forex_reference_rates_wide.csv" using 1:7 with lines title "USD/INR"
 
 ## Copyright & License
 
-The files in this repository are a compilation of **facts** — Reserve Bank of
-India reference exchange rates — and contain no original expression. Under the
+The files in this repository are compilations of **facts** — Reserve Bank of
+India reference exchange rates, IBJA bullion closes, and derived SGB
+redemption prices — and contain no original expression. Under the
 Copyright Act, 1957 (India), copyright protects only original works and
 requires a modicum of creativity; a bare compilation of facts carries no such
 originality. Accordingly, this data is **not copyrightable** and is in the
