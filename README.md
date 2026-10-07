@@ -4,9 +4,9 @@ Gap-free historical dataset of the **Reserve Bank of India (RBI) Reference
 Exchange Rates** for major currencies against the Indian Rupee (INR),
 auto-updated daily at 06:00 IST by a scheduled GitHub Actions workflow.
 
-**Coverage:** August 25, 1998 to October 6, 2026 (28.1 years)
-**Total Records:** 26,995
-**Total Trading Days:** 6,679
+**Coverage:** August 25, 1998 to October 7, 2026 (28.1 years)
+**Total Records:** 27,001
+**Total Trading Days:** 6,680
 
 ## Data
 
